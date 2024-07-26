@@ -21,8 +21,6 @@ const EditComponent = ({ attributes, setAttributes }) => {
         setIsLinkPickerVisible(isPrev => !isPrev);
     }
 
-
-
     const currentColorValue = ourColors?.filter(color => {
         return color.name == colorName
     })[0].color
