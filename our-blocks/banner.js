@@ -1,40 +1,58 @@
 
-
+import apiFetch from '@wordpress/api-fetch';
 import { registerBlockType } from '@wordpress/blocks';
 import { __ } from '@wordpress/i18n';
-import { useBlockProps, InnerBlocks } from '@wordpress/block-editor';
-import React from 'react';
+import { useBlockProps, InnerBlocks, InspectorControls, MediaUpload, MediaUploadCheck } from '@wordpress/block-editor';
+import {Button, PanelBody, PanelRow} from '@wordpress/components';
+import React, {useEffect} from 'react';
 
+const EditComponent = ({attributes, setAttributes}) => {
 
-const EditComponent = () => {
+    const {imgID, imgUrl} = attributes;
 
-    const useMeLeter = <>
-        <h1 className="headline headline--large">Welcome!</h1>
-        <h2 className="headline headline--medium">We think you&rsquo;ll like it here.</h2>
-        <h3 className="headline headline--small">
-            Why don&rsquo;t you check out the <strong>major</strong> you&rsquo;re interested in?
-        </h3>
-        <a href="#" className="btn btn--large btn--blue">
-            Find Your Major
-        </a>
-    </>
+    useEffect(()=> {
+        if(imgID) {
+            async function go(){
+                const response = await apiFetch({
+                    path:`wp/v2/media/${imgID}`,
+                    method:"GET"
+                });
+                setAttributes({imgUrl:response.source_url})
+            }
+            go()
+        }
+    }, [imgID])
 
-    return <div className="page-banner">
-        <div className="page-banner__bg-image" style={{ backgroundImage: "url('/wordpress/wp-content/themes/fictional-university-block-theme/images/library-hero.jpg')" }}></div>
-        <div className="page-banner__content container t-center c-white">
-            <InnerBlocks allowedBlocks={["ourblocktheme/genericheading", "ourblocktheme/genericbutton"]} />
+    const onFileSelect = (x) => {
+        setAttributes({imgID:x.id});
+        console.log(x);
+    }
+
+    return( <>
+        <InspectorControls>
+             
+            <PanelBody title='Background' initialOpen={true}>
+                <PanelRow>
+                    <MediaUploadCheck>
+                        <MediaUpload onSelect={onFileSelect} value={imgID} render={({open}) => {
+                            return <Button onClick={open}>Choose Image</Button>
+                        }}/>
+                    </MediaUploadCheck>
+                </PanelRow>
+            </PanelBody>
+        </InspectorControls>
+        <div className="page-banner">
+            <div className="page-banner__bg-image" style={{ backgroundImage: `url('${imgUrl}')` }}></div>
+            <div className="page-banner__content container t-center c-white">
+                <InnerBlocks allowedBlocks={["ourblocktheme/genericheading", "ourblocktheme/genericbutton"]} />
+            </div>
         </div>
-    </div>
+    </>)
 
 }
 
 const SaveComponent = () => {
-    return <div className="page-banner">
-        <div className="page-banner__bg-image" style={{ backgroundImage: "url('/wordpress/wp-content/themes/fictional-university-block-theme/images/library-hero.jpg')" }}></div>
-        <div className="page-banner__content container t-center c-white">
-            <InnerBlocks.Content />
-        </div>
-    </div>
+    return <InnerBlocks.Content />
 }
 
 
@@ -46,7 +64,9 @@ registerBlockType("ourblocktheme/banner", {
         align: ['full']
     },
     attributes: {
-        align: { type: "string", default: "full" }
+        align: { type: "string", default: "full" },
+        imgID:{type:"number"},
+        imgUrl:{type: "string", default:banner.fallbackimage}
     },
     edit: EditComponent,
     save: SaveComponent
